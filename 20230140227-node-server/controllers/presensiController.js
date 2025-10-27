@@ -1,79 +1,101 @@
-const presensiRecords = require("../data/presensiData");
-const { format } = require("date-fns-tz");
-const timeZone = "Asia/Jakarta";
+ 	// 1. Ganti sumber data dari array ke model Sequelize
+ 	const { Presensi } = require("../models");
+ 	const { format } = require("date-fns-tz");
+ 	const timeZone = "Asia/Jakarta";
+ 	
+ 	exports.CheckIn = async (req, res, next) => {
+    try {
+        // AMBIL DARI BODY UNTUK SEMENTARA
+        const { userId, nama } = req.body; 
 
-exports.CheckIn = (req, res) => {
-  const { id: userId, nama: userName } = req.user;
-  const waktuSekarang = new Date();
-  const existingRecord = presensiRecords.find(
-    (record) => record.userId === userId && record.checkOut === null
-  );
-  if (existingRecord) {
-    return res
-      .status(400)
-      .json({ message: "Anda sudah melakukan check-in hari ini." });
-  }
-  const newRecord = {
-    userId,
-    nama: userName,
-    checkIn: waktuSekarang,
-    checkOut: null,
-  };
-  presensiRecords.push(newRecord);
+        // Validasi sederhana
+        if (!userId || !nama) {
+            return res.status(400).json({ 
+                message: "Butuh userId dan nama di dalam body JSON" 
+            });
+        }
+        
+        // ... sisa kodenya sama ...
+        const waktuSekarang = new Date();
+        const existingRecord = await Presensi.findOne({
+            where: { userId: userId, checkOut: null },
+        });
 
-  const formattedData = {
-    ...newRecord,
-    checkIn: format(newRecord.checkIn, "yyyy-MM-dd HH:mm:ssXXX", { timeZone }),
-  };
-  console.log(
-    `DATA TERUPDATE: Karyawan ${userName} (ID: ${userId}) melakukan check-in.`
-  );
+        if (existingRecord) {
+            return res
+            .status(400)
+            .json({ message: "Anda sudah melakukan check-in hari ini." });
+        }
 
-  res.status(201).json({
-    message: `Halo ${userName}, check-in Anda berhasil pada pukul ${format(
-      waktuSekarang,
-      "HH:mm:ss",
-      { timeZone }
-    )} WIB`,
-    data: formattedData,
-  });
+        const newRecord = await Presensi.create({
+            userId: userId,     // <-- gunakan userId dari body
+            nama: nama,         // <-- gunakan nama dari body
+            checkIn: waktuSekarang,
+        });
+        
+        // ... sisa kode respon sukses ...
+        const formattedData = {
+            userId: newRecord.userId,
+            nama: newRecord.nama,
+            // ... (dst)
+        };
+        res.status(201).json({
+             message: `Halo ${nama}, check-in Anda berhasil...`,
+             data: formattedData,
+        });
+
+    } catch (err) {
+        next(err);
+    }
 };
+ 	
+// GANTI SELURUH FUNGSI CHECKOUT KAMU DENGAN INI
 
+exports.CheckOut = async (req, res, next) => { // <-- Tambahkan 'next'
+    try {
+      // 1. AMBIL 'userId' DARI REQ.BODY
+      const { userId } = req.body; 
 
+      // 2. Validasi
+      if (!userId) {
+          return res.status(400).json({ message: "userId diperlukan" });
+      }
 
-exports.CheckOut = (req, res) => {
-  const { id: userId, nama: userName } = req.user;
-  const waktuSekarang = new Date();
-  const recordToUpdate = presensiRecords.find(
-    (record) => record.userId === userId && record.checkOut === null
-  );
+      const waktuSekarang = new Date();
+  
+      // 3. Cari data pakai 'userId' dari body
+      const recordToUpdate = await Presensi.findOne({
+        where: { 
+            userId: userId, // <-- SUDAH DIGANTI
+            checkOut: null 
+        },
+      });
+  
+      if (!recordToUpdate) {
+        return res.status(404).json({
+          message: "Tidak ditemukan catatan check-in yang aktif untuk Anda.",
+        });
+      }
+  
+      // 4. Update dan simpan
+      recordToUpdate.checkOut = waktuSekarang;
+      await recordToUpdate.save();
+  
+      const formattedData = {
+          userId: recordToUpdate.userId,
+          nama: recordToUpdate.nama, // Ambil nama dari data yg di-update
+          checkIn: format(recordToUpdate.checkIn, "yyyy-MM-dd HH:mm:ssXXX", { timeZone }),
+          checkOut: format(recordToUpdate.checkOut, "yyyy-MM-dd HH:mm:ssXXX", { timeZone }),
+      };
+  
+      res.json({
+        // Ambil nama dari data yg di-update
+        message: `Selamat jalan ${recordToUpdate.nama}, check-out Anda berhasil...`,
+        data: formattedData,
+      });
 
-  if (!recordToUpdate) {
-    return res.status(404).json({
-      message: "Tidak ditemukan catatan check-in yang aktif untuk Anda.",
-    });
-  }
-  recordToUpdate.checkOut = waktuSekarang;
-  const formattedData = {
-    ...recordToUpdate,
-    checkIn: format(recordToUpdate.checkIn, "yyyy-MM-dd HH:mm:ssXXX", {
-      timeZone,
-    }),
-    checkOut: format(recordToUpdate.checkOut, "yyyy-MM-dd HH:mm:ssXXX", {
-      timeZone,
-    }),
-  };
-
-  console.log(
-    `DATA TERUPDATE: Karyawan ${userName} (ID: ${userId}) melakukan check-out.`
-  );
-
-  res.json({
-    message: `Selamat jalan ${userName}, check-out Anda berhasil pada pukul ${format(
-      waktuSekarang,
-      "HH:mm:ss",
-      { timeZone }
-    )} WIB`,
-    data: formattedData,
-  });
-};
+    } catch (error) {
+      // 5. Gunakan next(error) agar ditangkap error handler di server.js
+      next(error); 
+    }
+  };
