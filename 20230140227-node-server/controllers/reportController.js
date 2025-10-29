@@ -1,14 +1,32 @@
 const { Presensi } = require("../models");
-const { Op } = require("sequelize");
-
-exports.getDailyReport = async (req, res) => {
+const { Op } = require("sequelize"); 
+exports.getDailyReport = async (req, res, next) => { 
   try {
-    const { nama } = req.query;
-    let options = { where: {} };
+    
+    const { nama, tanggalMulai, tanggalSelesai } = req.query;
+    let options = { 
+      where: {},
+      order: [["checkIn", "DESC"]] 
+    };
 
+    
     if (nama) {
       options.where.nama = {
-        [Op.like]: `%${nama}%`,
+       
+        [Op.iLike]: `%${nama}%`, 
+      };
+    }
+
+    
+    if (tanggalMulai && tanggalSelesai) {
+      
+      const startDate = new Date(tanggalMulai);
+      const endDate = new Date(tanggalSelesai);
+
+      endDate.setHours(23, 59, 59, 999);
+
+      options.where.checkIn = { 
+        [Op.between]: [startDate, endDate],
       };
     }
 
@@ -16,11 +34,16 @@ exports.getDailyReport = async (req, res) => {
 
     res.json({
       reportDate: new Date().toLocaleDateString(),
+    
+      filters: { 
+        nama: nama || null, 
+        tanggalMulai: tanggalMulai || null,
+        tanggalSelesai: tanggalSelesai || null
+      },
       data: records,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Gagal mengambil laporan", error: error.message });
+
+    next(error);
   }
 };
