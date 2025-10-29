@@ -9,4 +9,6 @@ router.post('/check-out', presensiController.CheckOut);
 
 router.delete('/delete/:id', presensiController.DeletePresensi);
 
+router.put("/:id", presensiController.UpdatePresensi);
+ 
 module.exports = router;
