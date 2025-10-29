@@ -140,16 +140,19 @@ exports.DeletePresensi = async (req, res, next) => {
   }
 };
 
-exports.updatePresensi = async (req, res) => {
+exports.UpdatePresensi = async (req, res, next) => { // <-- PERBAIKAN 2: Tambahkan 'next'
   try {
     const presensiId = req.params.id;
     const { checkIn, checkOut, nama } = req.body;
+
+    // Validasi: pastikan ada sesuatu untuk di-update
     if (checkIn === undefined && checkOut === undefined && nama === undefined) {
       return res.status(400).json({
         message:
           "Request body tidak berisi data yang valid untuk diupdate (checkIn, checkOut, atau nama).",
       });
     }
+
     const recordToUpdate = await Presensi.findByPk(presensiId);
     if (!recordToUpdate) {
       return res
@@ -157,9 +160,11 @@ exports.updatePresensi = async (req, res) => {
         .json({ message: "Catatan presensi tidak ditemukan." });
     }
 
+
     recordToUpdate.checkIn = checkIn || recordToUpdate.checkIn;
     recordToUpdate.checkOut = checkOut || recordToUpdate.checkOut;
     recordToUpdate.nama = nama || recordToUpdate.nama;
+    
     await recordToUpdate.save();
 
     res.json({
@@ -167,8 +172,6 @@ exports.updatePresensi = async (req, res) => {
       data: recordToUpdate,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Terjadi kesalahan pada server", error: error.message });
+    next(error);
   }
 };
