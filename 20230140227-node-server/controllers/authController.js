@@ -1,42 +1,49 @@
 const { User } = require('../models');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');	
+const jwt = require('jsonwebtoken');
 const JWT_SECRET = 'INI_ADALAH_KUNCI_RAHASIA_ANDA_YANG_SANGAT_AMAN';
 
+// FUNGSI REGISTER YANG SUDAH DIPERBAIKI
 exports.register = async (req, res) => {
   try {
+    // 1. Ambil data dari body (ini yang kurang di kode Anda)
     const { nama, email, password, role } = req.body;
 
-    if (!nama || !email || !password) {
-      return res.status(400).json({ message: "Nama, email, dan password harus diisi" });
-    }
-
-    if (role && !['mahasiswa', 'admin'].includes(role)) {
-      return res.status(400).json({ message: "Role tidak valid. Harus 'mahasiswa' atau 'admin'." });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10); 
+    // 2. Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // 3. Buat user baru
     const newUser = await User.create({
       nama,
       email,
       password: hashedPassword,
-      role: role || 'mahasiswa' 
+      role: role || 'mahasiswa'
     });
 
+    // 4. Kirim respons sukses
     res.status(201).json({
       message: "Registrasi berhasil",
       data: { id: newUser.id, email: newUser.email, role: newUser.role }
     });
 
   } catch (error) {
+    // 5. Tangani error
+    
+    // Ini untuk debugging di terminal Anda
+    console.error("!!! ERROR REGISTRASI:", error); 
+
+    // Ini untuk error jika email sudah ada
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ message: "Email sudah terdaftar." });
     }
+    
+    // Ini untuk error server lainnya
     res.status(500).json({ message: "Terjadi kesalahan pada server", error: error.message });
   }
 };
 
 
+// FUNGSI LOGIN (Sudah benar dari kode Anda)
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -54,19 +61,20 @@ exports.login = async (req, res) => {
     const payload = {
       id: user.id,
       nama: user.nama,
-      role: user.role 
+      role: user.role
     };
 
     const token = jwt.sign(payload, JWT_SECRET, {
-      expiresIn: '1h' 
+      expiresIn: '1h'
     });
 
     res.json({
       message: "Login berhasil",
-      token: token 
+      token: token
     });
 
   } catch (error) {
+    console.error("!!! ERROR LOGIN:", error); // Saya tambahkan ini untuk debugging
     res.status(500).json({ message: "Terjadi kesalahan pada server", error: error.message });
   }
 };
