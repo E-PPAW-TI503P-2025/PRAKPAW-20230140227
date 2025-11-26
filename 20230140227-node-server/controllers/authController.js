@@ -1,9 +1,8 @@
 const { User } = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'INI_ADALAH_KUNCI_RAHASIA_ANDA_YANG_SANGAT_AMAN';
+const JWT_SECRET = 'jwtsecret123';
 
-// FUNGSI REGISTER YANG SUDAH DIPERBAIKI
 exports.register = async (req, res) => {
   try {
     // 1. Ambil data dari body (ini yang kurang di kode Anda)

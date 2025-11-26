@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const app = express();
-const PORT = 3001;
+const PORT = 5000;
 
 // Routers
 const booksRouter = require('./routes/books');
@@ -13,7 +13,7 @@ const authRoutes = require("./routes/auth");
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(morgan("dev")); // Logger yang lebih detail
+app.use(morgan("dev")); 
 
 // Custom logger middleware
 app.use((req, res, next) => {
