@@ -1,11 +1,11 @@
 # CHECK IN
-![POST](image-4.png)
+![POST](ss/image-4.png)
 
 # CHECK OUT
-![POST](image-5.png)
+![POST](ss/image-5.png)
 
 # DATABASE SETELAH PRESENSI
-![DATABASE](image-6.png)
+![DATABASE](ss/image-6.png)
 
 # REPORT 
-![REPORT](image-7.png)
+![REPORT](ss/image-7.png)

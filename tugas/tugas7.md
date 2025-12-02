@@ -1,9 +1,9 @@
 # Login Page
-![login](image-8.png)
+![login](ss/image-8.png)
 
 # Register Page
-![register](<Screenshot 2025-11-17 211157.png>)
+![register](<ss/Screenshot 2025-11-17 211157.png>)
 
 # Dasboard Page
-![dasboard](<Screenshot 2025-11-17 211229.png>)
+![dasboard](<ss/Screenshot 2025-11-17 211229.png>)
 

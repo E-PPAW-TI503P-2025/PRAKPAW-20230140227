@@ -1,8 +1,8 @@
 # ADMIN
-![POST](image-8.png)
+![POST](ss/image-8.png)
 # REGISTER
-![POST](image-9.png)
+![POST](ss/image-9.png)
 # REGISTER
-![POST](image-10.png)
+![POST](ss/image-10.png)
 # Table Users
-![Table](image-11.png)
+![Table](ss/image-11.png)

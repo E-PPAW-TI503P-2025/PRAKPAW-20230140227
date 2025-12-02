@@ -1,7 +1,7 @@
 # get
-![GET](image.png)
+![GET](ss/ss/image.png)
 # post
-![POST](image-1.png)
+![POST](ss/image-1.png)
 # put
-![PUT](image-2.png)
-![DELETE](image-3.png)
+![PUT](ss/image-2.png)
+![DELETE](ss/image-3.png)
