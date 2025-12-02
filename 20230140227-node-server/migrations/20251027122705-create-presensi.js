@@ -2,6 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // KITA PAKAI createTable BUKAN addColumn
     await queryInterface.createTable('Presensis', {
       id: {
         allowNull: false,
@@ -11,20 +12,23 @@ module.exports = {
       },
       userId: {
         type: Sequelize.INTEGER,
-        allowNull: false
-      },
-      nama: {
-        type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        references: {
+          model: 'Users', // Nama tabel referensi (Perhatikan huruf besar 'Users')
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       checkIn: {
-        allowNull: false,
         type: Sequelize.DATE
       },
       checkOut: {
-        allowNull: true, // checkOut bisa kosong saat pertama kali check-in
         type: Sequelize.DATE
       },
+      // Field Latitude & Longitude bisa langsung ditambahkan disini
+      // ATAU lewat file migrasi terpisah (sesuai modul).
+      // Biar aman, kita masukkan standard dulu:
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

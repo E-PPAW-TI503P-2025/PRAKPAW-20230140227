@@ -1,11 +1,13 @@
 const { Presensi, User, Sequelize } = require('../models');
 const { Op } = Sequelize;
 
-
+// 1. FUNGSI CHECK-IN (UPDATE: MENERIMA LOKASI)
 const checkIn = async (req, res) => {
   try {
-     
-    const userId = req.user.id; 
+    const userId = req.user.id; // Ambil ID dari Token
+    const { latitude, longitude } = req.body; // <-- AMBIL DATA LOKASI DARI FRONTEND
+
+    // Cek apakah hari ini sudah check-in
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
@@ -24,11 +26,12 @@ const checkIn = async (req, res) => {
       return res.status(400).json({ message: "Anda sudah melakukan Check-In hari ini." });
     }
 
-     
+    // Buat data presensi baru dengan lokasi
     const presensi = await Presensi.create({
       userId,
       checkIn: new Date(),
-       
+      latitude: latitude,   // <-- SIMPAN LATITUDE
+      longitude: longitude  // <-- SIMPAN LONGITUDE
     });
 
     res.status(201).json({
@@ -42,13 +45,13 @@ const checkIn = async (req, res) => {
   }
 };
 
- 
+// 2. FUNGSI CHECK-OUT
 const checkOut = async (req, res) => {
   try {
-    
     const userId = req.user.id;
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
+
     const presensi = await Presensi.findOne({
       where: {
         userId,
@@ -75,31 +78,30 @@ const checkOut = async (req, res) => {
   }
 };
 
+// 3. FUNGSI LAPORAN
 const getLaporan = async (req, res) => {
   try {
-    const { nama } = req.query; 
+    const { nama } = req.query;
 
     let options = {
       include: [
         {
           model: User,
-          as: 'user',  
-          attributes: ['id', 'nama', 'email']  
+          as: 'user',
+          attributes: ['id', 'nama', 'email']
         }
       ],
       order: [['checkIn', 'DESC']]
     };
 
-     
     if (nama) {
       options.include[0].where = {
         nama: {
-          [Op.like]: `%${nama}%`  
+          [Op.like]: `%${nama}%`
         }
       };
     }
 
-  
     const reports = await Presensi.findAll(options);
 
     res.status(200).json(reports);
@@ -110,7 +112,6 @@ const getLaporan = async (req, res) => {
   }
 };
 
- 
 module.exports = {
   checkIn,
   checkOut,
