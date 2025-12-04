@@ -1,13 +1,44 @@
 const { Presensi, User, Sequelize } = require('../models');
 const { Op } = Sequelize;
+const multer = require('multer');
+const path = require('path');
 
-// 1. FUNGSI CHECK-IN (UPDATE: MENERIMA LOKASI)
+// --- KONFIGURASI MULTER (UPLOAD FOTO) ---
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Pastikan folder 'uploads' sudah ada di root project
+  },
+  filename: (req, file, cb) => {
+    // Format nama file: userId-timestamp.ext
+    // Contoh: 12-1715629999.jpg
+    cb(null, `${req.user.id}-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Hanya file gambar yang diperbolehkan!'), false);
+  }
+};
+
+// DEFINISIKAN VARIABEL UPLOAD DISINI
+const upload = multer({ storage: storage, fileFilter: fileFilter });
+
+
+// --- FUNGSI CONTROLLER ---
+
+// 1. FUNGSI CHECK-IN (Dengan Lokasi & Foto)
 const checkIn = async (req, res) => {
   try {
-    const userId = req.user.id; // Ambil ID dari Token
-    const { latitude, longitude } = req.body; // <-- AMBIL DATA LOKASI DARI FRONTEND
+    const userId = req.user.id;
+    const { latitude, longitude } = req.body;
+    
+    // Ambil path foto jika ada yang diupload
+    const buktiFoto = req.file ? req.file.path : null; 
 
-    // Cek apakah hari ini sudah check-in
+    // Cek Double Check-In
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
@@ -16,9 +47,7 @@ const checkIn = async (req, res) => {
     const existingPresensi = await Presensi.findOne({
       where: {
         userId,
-        checkIn: {
-          [Op.between]: [startOfDay, endOfDay]
-        }
+        checkIn: { [Op.between]: [startOfDay, endOfDay] }
       }
     });
 
@@ -26,12 +55,13 @@ const checkIn = async (req, res) => {
       return res.status(400).json({ message: "Anda sudah melakukan Check-In hari ini." });
     }
 
-    // Buat data presensi baru dengan lokasi
+    // Simpan ke Database
     const presensi = await Presensi.create({
       userId,
       checkIn: new Date(),
-      latitude: latitude,   // <-- SIMPAN LATITUDE
-      longitude: longitude  // <-- SIMPAN LONGITUDE
+      latitude,
+      longitude,
+      buktiFoto // Simpan path foto (misal: uploads/1-12345.jpg)
     });
 
     res.status(201).json({
@@ -40,7 +70,7 @@ const checkIn = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Error CheckIn:", error);
     res.status(500).json({ message: "Terjadi kesalahan server saat Check-In." });
   }
 };
@@ -73,7 +103,7 @@ const checkOut = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Error CheckOut:", error);
     res.status(500).json({ message: "Terjadi kesalahan server saat Check-Out." });
   }
 };
@@ -96,23 +126,21 @@ const getLaporan = async (req, res) => {
 
     if (nama) {
       options.include[0].where = {
-        nama: {
-          [Op.like]: `%${nama}%`
-        }
+        nama: { [Op.like]: `%${nama}%` }
       };
     }
 
     const reports = await Presensi.findAll(options);
-
     res.status(200).json(reports);
 
   } catch (error) {
-    console.error(error);
+    console.error("Error GetLaporan:", error);
     res.status(500).json({ message: "Gagal mengambil data laporan." });
   }
 };
 
 module.exports = {
+  upload,     
   checkIn,
   checkOut,
   getLaporan

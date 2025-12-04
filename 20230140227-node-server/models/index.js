@@ -16,6 +16,7 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
+// === MEMBACA FILE MODEL ===
 fs
   .readdirSync(__dirname)
   .filter(file => {
@@ -27,8 +28,14 @@ fs
     );
   })
   .forEach(file => {
+    // Memuat model
     const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+    
+    // Memasukkan ke object db
     db[model.name] = model;
+    
+    // LOG DEBUGGING: Cek nama model yang berhasil dimuat
+    console.log(`>> Model Loaded: ${model.name}`); 
   });
 
 Object.keys(db).forEach(modelName => {

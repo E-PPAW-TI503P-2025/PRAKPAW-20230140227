@@ -1,10 +1,16 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const dotenv = require("dotenv");
+const db = require("./models");
+const path = require("path"); 
+
+dotenv.config();
+
 const app = express();
 const PORT = 5000;
 
-// Routers
+// Import Routers
 const booksRouter = require('./routes/books');
 const presensiRoutes = require("./routes/presensi");
 const reportRoutes = require("./routes/reports");
@@ -13,16 +19,21 @@ const authRoutes = require("./routes/auth");
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(morgan("dev")); 
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan("dev"));
 
-// Custom logger middleware
+// Middleware Logger Custom
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${req.method} ${req.url} - IP: ${req.ip}`);
     next();
 });
 
-// Routes
+// Middleware Static Folder (PENTING UNTUK AKSES FOTO)
+// Membuat folder 'uploads' bisa diakses publik lewat browser
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Routes Utama
 app.get('/', (req, res) => {
     res.json({
         message: 'Welcome to Library Management API',
@@ -49,7 +60,7 @@ app.use("/api/presensi", presensiRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/auth", authRoutes);
 
-// 404 Not Found Handler (harus setelah semua rute)
+// 404 Not Found Handler
 app.use((req, res) => {
     res.status(404).json({
         error: 'Not Found',
@@ -58,7 +69,7 @@ app.use((req, res) => {
     });
 });
 
-// Generic Error Handler (harus di paling akhir)
+// Global Error Handler
 app.use((err, req, res, next) => {
     console.error(`[${new Date().toISOString()}] Error:`, err.stack);
     
@@ -73,8 +84,12 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start the server (hanya sekali)
-app.listen(PORT, () => {
-    console.log(`Express server running at http://localhost:${PORT}/`);
-    console.log(`Library Management API is ready!`);
+// Start Server & Sync Database
+db.sequelize.sync({ alter: true }).then(() => {
+    app.listen(PORT, () => {
+        console.log(`Express server running at http://localhost:${PORT}/`);
+        console.log(`Library Management API is ready!`);
+    });
+}).catch((err) => {
+    console.error("Gagal koneksi database:", err);
 });
